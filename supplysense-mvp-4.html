@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SupplySense AI — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #09100a;
+  --surface: #111810;
+  --surface2: #172014;
+  --surface3: #1e2a18;
+  --border: #253020;
+  --border2: #2e3a28;
+  --accent: #b8f04a;
+  --accent2: #7ed957;
+  --accent-dim: rgba(184,240,74,0.10);
+  --accent-dim2: rgba(184,240,74,0.06);
+  --text: #dfeac8;
+  --text-muted: #7a8a60;
+  --text-dim: #4a5838;
+  --red: #e8604a;
+  --red-dim: rgba(232,96,74,0.12);
+  --amber: #f0b030;
+  --amber-dim: rgba(240,176,48,0.12);
+  --blue: #5ab0e8;
+  --blue-dim: rgba(90,176,232,0.10);
+  --sidebar-w: 220px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 14px;
+  display: flex;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px; font-weight: 500;
+  color: var(--text);
+}
+
+.logo-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2.4s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+
+.sidebar-nav { flex: 1; padding: 12px 0; }
+
+.nav-section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+  letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 14px 20px 6px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 20px;
+  font-size: 13px; color: var(--text-muted);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+  user-select: none;
+}
+.nav-item:hover { color: var(--text); background: var(--accent-dim2); }
+.nav-item.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-left-color: var(--accent);
+}
+
+.nav-item .icon { font-size: 15px; width: 18px; text-align: center; }
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+}
+
+.status-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(126,217,87,0.1);
+  border: 1px solid rgba(126,217,87,0.25);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 10px; color: var(--accent2);
+  margin-bottom: 6px;
+}
+.status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent2); animation: pulse 1.8s infinite; }
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100vh;
+}
+
+.topbar {
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  display: flex; align-items: center;
+  padding: 0 28px;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.topbar-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px; font-weight: 400;
+}
+
+.topbar-sub {
+  font-size: 11px; color: var(--text-muted);
+  font-family: 'DM Mono', monospace;
+  margin-left: 2px;
+}
+
+.topbar-right {
+  margin-left: auto;
+  display: flex; gap: 10px; align-items: center;
+}
+
+.btn-sm {
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer; border: none;
+  letter-spacing: 0.02em;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.btn-sm:hover { opacity: 0.82; transform: translateY(-1px); }
+.btn-accent { background: var(--accent); color: var(--bg); }
+.btn-ghost2 { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+
+/* ── VIEWS ── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── KPI ROW ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.kpi-card:hover { border-color: var(--border2); }
+
+.kpi-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.kpi-val {
+  font-family: 'DM Serif Display', serif;
+  font-size: 32px; line-height: 1; margin-bottom: 4px;
+}
+
+.kpi-delta {
+  font-size: 10px; font-family: 'DM Mono', monospace;
+}
+.pos { color: var(--accent2); }
+.neg { color: var(--red); }
+.neu { color: var(--text-muted); }
+
+.kpi-sparkline {
+  position: absolute; bottom: 0; right: 0;
+  width: 80px; height: 40px;
+  opacity: 0.3;
+}
+
+/* ── GRID LAYOUTS ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+.grid-full { margin-bottom: 16px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.card-title {
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.card-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+.card-body { padding: 16px 18px; }
+
+/* ── BAR CHART ── */
+.bar-chart-wrap { display: flex; flex-direction: column; gap: 10px; }
+
+.chart-area {
+  display: flex; align-items: flex-end; gap: 6px;
+  height: 120px;
+}
+
+.chart-col {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 3px; height: 100%;
+  justify-content: flex-end;
+}
+
+.chart-bars { display: flex; gap: 2px; align-items: flex-end; width: 100%; }
+
+.cbar {
+  flex: 1; border-radius: 3px 3px 0 0;
+  cursor: pointer; transition: opacity 0.15s, filter 0.15s;
+  position: relative;
+}
+.cbar:hover { filter: brightness(1.2); }
+
+.cbar-actual { background: var(--accent); opacity: 0.75; }
+.cbar-pred { background: var(--blue); opacity: 0.4; border: 1px dashed rgba(90,176,232,0.5); }
+
+.chart-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+}
+
+.chart-legend {
+  display: flex; gap: 16px;
+}
+
+.legend-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; color: var(--text-muted);
+}
+
+.legend-dot {
+  width: 8px; height: 4px; border-radius: 2px;
+}
+
+/* ── STOCK TABLE ── */
+.stock-table { width: 100%; border-collapse: collapse; }
+.stock-table th {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  text-align: left; padding: 0 12px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.stock-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.stock-table tr:last-child td { border-bottom: none; }
+.stock-table tr:hover td { background: var(--accent-dim2); }
+
+.stock-bar-bg {
+  height: 5px; background: var(--surface2);
+  border-radius: 3px; overflow: hidden; width: 80px;
+}
+.stock-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px; border-radius: 20px;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.badge-ok { background: rgba(126,217,87,0.12); color: var(--accent2); }
+.badge-low { background: var(--amber-dim); color: var(--amber); }
+.badge-crit { background: var(--red-dim); color: var(--red); }
+
+/* ── ALERTS ── */
+.alert-list { display: flex; flex-direction: column; gap: 8px; }
+
+.alert-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex; gap: 12px; align-items: flex-start;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+.alert-item:hover { border-color: var(--border2); }
+
+.alert-item.crit { border-left: 3px solid var(--red); }
+.alert-item.warn { border-left: 3px solid var(--amber); }
+.alert-item.info { border-left: 3px solid var(--blue); }
+
+.alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.alert-title { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.alert-sub { font-size: 11px; color: var(--text-muted); }
+
+.alert-action {
+  margin-left: auto; flex-shrink: 0;
+  padding: 4px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 10px; font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  align-self: center;
+}
+.alert-action:hover { background: var(--accent-dim); }
+
+/* ── INGREDIENT CALC ── */
+.calc-section { margin-bottom: 20px; }
+
+.calc-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--text-dim);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.calc-row {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 8px;
+}
+
+.calc-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.calc-input:focus { border-color: var(--accent); }
+.calc-input[type=number] { width: 90px; }
+
+.calc-input-wide { width: 100%; }
+
+.calc-output {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 16px 18px;
+}
+
+.calc-output-title {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-muted); margin-bottom: 12px;
+}
+
+.calc-result-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.calc-result-row:last-child { border-bottom: none; }
+
+.calc-result-name { color: var(--text-muted); }
+.calc-result-val { font-family: 'DM Mono', monospace; color: var(--accent); font-weight: 500; }
+
+.calc-result-stock {
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── ORDERS ── */
+.orders-table { width: 100%; border-collapse: collapse; }
+.orders-table th {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  text-align: left; padding: 0 14px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.orders-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px; vertical-align: middle;
+}
+
+.orders-table tr:last-child td { border-bottom: none; }
+.orders-table tr:hover td { background: var(--accent-dim2); }
+
+.approve-btn {
+  padding: 4px 12px;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 4px;
+  font-size: 10px; font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  letter-spacing: 0.04em;
+}
+.approve-btn:hover { opacity: 0.82; }
+.approve-btn:disabled { opacity: 0.4; cursor: default; }
+
+.approved-tag {
+  font-size: 10px; font-weight: 600;
+  color: var(--accent2);
+  font-family: 'DM Mono', monospace;
+}
+
+/* ── ANALYTICS ── */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.metric-big {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 20px;
+  text-align: center;
+}
+
+.metric-big-val {
+  font-family: 'DM Serif Display', serif;
+  font-size: 44px; line-height: 1;
+  margin-bottom: 4px;
+}
+
+.metric-big-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
+
+/* ── FORECAST INPUTS ── */
+.forecast-form {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px; margin-bottom: 16px;
+}
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; color: var(--text-dim);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+select.calc-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234a5838' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+  width: 100%;
+}
+
+/* ── TIMELINE ── */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+
+.tl-item {
+  display: flex; gap: 14px;
+  padding: 10px 0;
+  border-left: 1px solid var(--border);
+  padding-left: 18px;
+  position: relative;
+}
+
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -4px; top: 16px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--border2);
+  border: 1px solid var(--border);
+}
+
+.tl-item.done::before { background: var(--accent); border-color: var(--accent); }
+.tl-item.now::before { background: var(--amber); border-color: var(--amber); animation: pulse 1.5s infinite; }
+
+.tl-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: var(--text-dim);
+  white-space: nowrap; margin-top: 1px;
+  width: 50px; flex-shrink: 0;
+}
+
+.tl-content { flex: 1; }
+.tl-title { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.tl-desc { font-size: 11px; color: var(--text-muted); }
+
+/* ── WASTE ── */
+.waste-items { display: flex; flex-direction: column; gap: 8px; }
+
+.waste-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+
+.waste-icon { font-size: 18px; }
+.waste-info { flex: 1; }
+.waste-name { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.waste-expires { font-size: 10px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+.waste-rec {
+  background: var(--amber-dim);
+  border: 1px solid rgba(240,176,48,0.2);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 10px; color: var(--amber);
+  font-weight: 600;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 28px;
+  width: 420px;
+  transform: translateY(12px);
+  transition: transform 0.2s;
+}
+.modal-overlay.open .modal { transform: none; }
+
+.modal-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px; margin-bottom: 6px;
+}
+.modal-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+
+.modal-row {
+  display: flex; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.modal-row:last-of-type { border-bottom: none; }
+.modal-key { color: var(--text-muted); }
+.modal-val { font-family: 'DM Mono', monospace; color: var(--text); }
+
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.modal-btn-approve {
+  flex: 1; padding: 10px;
+  background: var(--accent); color: var(--bg);
+  border: none; border-radius: 5px;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.modal-btn-approve:hover { opacity: 0.85; }
+
+.modal-btn-cancel {
+  flex: 1; padding: 10px;
+  background: transparent; color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 13px; cursor: pointer;
+  transition: border-color 0.15s;
+}
+.modal-btn-cancel:hover { border-color: var(--border2); color: var(--text); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--surface2);
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  padding: 14px 18px;
+  display: flex; gap: 10px; align-items: center;
+  font-size: 13px;
+  z-index: 2000;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.toast.show { transform: none; opacity: 1; }
+.toast-icon { font-size: 18px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-dot"></div>
+    SupplySense AI
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <div class="nav-item active" onclick="switchView('dashboard', this)">
+      <span class="icon">⬛</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="switchView('forecast', this)">
+      <span class="icon">📊</span> Demand Forecast
+    </div>
+    <div class="nav-section-label">Operations</div>
+    <div class="nav-item" onclick="switchView('inventory', this)">
+      <span class="icon">📦</span> Inventory
+    </div>
+    <div class="nav-item" onclick="switchView('calculator', this)">
+      <span class="icon">🧮</span> Ingredient Calc
+    </div>
+    <div class="nav-item" onclick="switchView('orders', this)">
+      <span class="icon">🛒</span> Supplier Orders
+      <span id="order-badge" style="margin-left:auto;background:var(--red);color:#fff;border-radius:10px;font-size:9px;padding:1px 6px;font-family:'DM Mono',monospace">2</span>
+    </div>
+    <div class="nav-section-label">Insights</div>
+    <div class="nav-item" onclick="switchView('waste', this)">
+      <span class="icon">♻️</span> Waste Optimizer
+    </div>
+    <div class="nav-item" onclick="switchView('analytics', this)">
+      <span class="icon">📈</span> Analytics
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="status-pill"><span class="status-dot"></span> AI Active</div>
+    <div>Rosario's Bistro</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="view-title">Dashboard</div>
+      <div class="topbar-sub" id="view-sub">Thursday, Mar 12 · Dinner service forecast active</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-sm btn-ghost2" onclick="switchView('calculator', document.querySelectorAll('.nav-item')[3])">Run Calc</button>
+      <button class="btn-sm btn-accent" onclick="switchView('orders', document.querySelectorAll('.nav-item')[4])">⚠ 2 Reorder Alerts</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── DASHBOARD VIEW ── -->
+    <div class="view active" id="view-dashboard">
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Predicted Covers Today</div>
+          <div class="kpi-val" style="color:var(--accent)">187</div>
+          <div class="kpi-delta pos">↑ +23% vs avg Thursday</div>
+          <svg class="kpi-sparkline" viewBox="0 0 80 40"><polyline points="0,35 13,30 26,28 39,20 52,18 65,10 80,5" fill="none" stroke="#b8f04a" stroke-width="2"/></svg>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Open Reorder Alerts</div>
+          <div class="kpi-val" style="color:var(--red)">2</div>
+          <div class="kpi-delta neg">Beef mince, Buns — critical</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Food Waste This Week</div>
+          <div class="kpi-val">2.1<span style="font-size:16px;font-family:'Instrument Sans',sans-serif"> kg</span></div>
+          <div class="kpi-delta pos">↓ −38% vs last week</div>
+          <svg class="kpi-sparkline" viewBox="0 0 80 40"><polyline points="0,5 13,10 26,8 39,15 52,12 65,18 80,20" fill="none" stroke="#7ed957" stroke-width="2"/></svg>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Forecast Accuracy (7d)</div>
+          <div class="kpi-val">96<span style="font-size:16px;font-family:'Instrument Sans',sans-serif">%</span></div>
+          <div class="kpi-delta pos">↑ +2pt this month</div>
+          <svg class="kpi-sparkline" viewBox="0 0 80 40"><polyline points="0,20 13,18 26,15 39,14 52,12 65,10 80,8" fill="none" stroke="#5ab0e8" stroke-width="2"/></svg>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Weekly Demand: Actual vs Predicted</span>
+            <span class="card-tag">Covers / day</span>
+          </div>
+          <div class="card-body">
+            <div class="bar-chart-wrap">
+              <div class="chart-area" id="dash-chart"></div>
+              <div class="chart-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--accent);opacity:0.75"></div>Actual</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--blue);opacity:0.4;border:1px dashed rgba(90,176,232,0.5)"></div>Predicted</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Reorder Alerts</span>
+            <span class="card-tag">Action required</span>
+          </div>
+          <div class="card-body">
+            <div class="alert-list">
+              <div class="alert-item crit">
+                <div class="alert-icon">🚨</div>
+                <div>
+                  <div class="alert-title">Beef mince — 18% stock</div>
+                  <div class="alert-sub">Need 9.6 kg tonight. Only 1.8 kg remain.</div>
+                </div>
+                <div class="alert-action" onclick="openOrderModal('Beef mince', '8 kg', 'MetroMeat Co.', '$4.20/kg', '$33.60', 'Today 14:00')">Order →</div>
+              </div>
+              <div class="alert-item warn">
+                <div class="alert-icon">⚠️</div>
+                <div>
+                  <div class="alert-title">Burger buns — 34% stock</div>
+                  <div class="alert-sub">Need 64 units Fri. ~40 units remain.</div>
+                </div>
+                <div class="alert-action" onclick="openOrderModal('Burger buns', '80 units', 'City Bakery Supplies', '$0.45/unit', '$36.00', 'Tomorrow 08:00')">Order →</div>
+              </div>
+              <div class="alert-item info">
+                <div class="alert-icon">ℹ️</div>
+                <div>
+                  <div class="alert-title">Cheddar cheese — expires in 2 days</div>
+                  <div class="alert-sub">Consider a cheese-heavy special tonight.</div>
+                </div>
+                <div class="alert-action" onclick="switchView('waste', document.querySelectorAll('.nav-item')[5])">View →</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Today's Service Timeline</span>
+            <span class="card-tag">Peak: 19:30–21:00</span>
+          </div>
+          <div class="card-body">
+            <div class="timeline">
+              <div class="tl-item done">
+                <div class="tl-time">07:00</div>
+                <div class="tl-content"><div class="tl-title">Breakfast prep</div><div class="tl-desc">26 predicted covers — stock verified ✓</div></div>
+              </div>
+              <div class="tl-item done">
+                <div class="tl-time">11:30</div>
+                <div class="tl-content"><div class="tl-title">Lunch service</div><div class="tl-desc">58 covers · burger demand: 18 units</div></div>
+              </div>
+              <div class="tl-item now">
+                <div class="tl-time">15:00</div>
+                <div class="tl-content"><div class="tl-title">⚡ Reorder window closes</div><div class="tl-desc">Approve beef & bun orders before cutoff</div></div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-time">18:00</div>
+                <div class="tl-content"><div class="tl-title">Dinner prep</div><div class="tl-desc">103 predicted covers · heavy burger demand</div></div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-time">21:00</div>
+                <div class="tl-content"><div class="tl-title">Late service</div><div class="tl-desc">~28 covers · lighter demand expected</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Live Inventory Snapshot</span>
+            <span class="card-tag">Top ingredients</span>
+          </div>
+          <div class="card-body" style="padding:10px 18px">
+            <table class="stock-table">
+              <thead><tr>
+                <th>Ingredient</th><th>Stock</th><th>Level</th><th>Status</th>
+              </tr></thead>
+              <tbody>
+                <tr><td>Beef mince</td><td style="font-family:'DM Mono',monospace">1.8 kg</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:18%;background:var(--red)"></div></div></td><td><span class="badge badge-crit">Critical</span></td></tr>
+                <tr><td>Burger buns</td><td style="font-family:'DM Mono',monospace">40 units</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:34%;background:var(--amber)"></div></div></td><td><span class="badge badge-low">Low</span></td></tr>
+                <tr><td>Iceberg lettuce</td><td style="font-family:'DM Mono',monospace">1.4 kg</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:72%;background:var(--accent2)"></div></div></td><td><span class="badge badge-ok">OK</span></td></tr>
+                <tr><td>Tomatoes</td><td style="font-family:'DM Mono',monospace">3.6 kg</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:91%;background:var(--accent)"></div></div></td><td><span class="badge badge-ok">OK</span></td></tr>
+                <tr><td>Cheddar cheese</td><td style="font-family:'DM Mono',monospace">2.1 kg</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:41%;background:var(--amber)"></div></div></td><td><span class="badge badge-low">Low</span></td></tr>
+                <tr><td>Chicken breast</td><td style="font-family:'DM Mono',monospace">5.2 kg</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:87%;background:var(--accent)"></div></div></td><td><span class="badge badge-ok">OK</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FORECAST VIEW ── -->
+    <div class="view" id="view-forecast">
+      <div class="forecast-form">
+        <div class="form-group">
+          <div class="form-label">Date</div>
+          <input type="date" class="calc-input" id="fc-date" value="2026-03-12">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Day type</div>
+          <select class="calc-input" id="fc-daytype">
+            <option>Weekday</option>
+            <option>Friday</option>
+            <option selected>Saturday</option>
+            <option>Sunday</option>
+            <option>Holiday</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Weather</div>
+          <select class="calc-input" id="fc-weather">
+            <option>Sunny</option>
+            <option selected>Cloudy</option>
+            <option>Rainy</option>
+            <option>Stormy</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Local Event</div>
+          <select class="calc-input" id="fc-event">
+            <option>None</option>
+            <option selected>Stadium event (+4km)</option>
+            <option>Market day</option>
+            <option>Public holiday</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Season</div>
+          <select class="calc-input" id="fc-season">
+            <option>Spring</option>
+            <option>Summer</option>
+            <option>Autumn</option>
+            <option selected>Winter</option>
+          </select>
+        </div>
+        <div class="form-group" style="justify-content:flex-end">
+          <div class="form-label" style="opacity:0">.</div>
+          <button class="btn-sm btn-accent" style="padding:10px 20px;font-size:13px" onclick="runForecast()">Run Forecast →</button>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Hourly Cover Prediction</span>
+            <span class="card-tag" id="fc-total-tag">Total: 187 covers</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-area" id="hourly-chart" style="height:140px"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">AI Forecast Inputs</span>
+            <span class="card-tag">Signal analysis</span>
+          </div>
+          <div class="card-body">
+            <div id="forecast-signals"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card grid-full">
+        <div class="card-header">
+          <span class="card-title">Top Menu Item Predictions</span>
+          <span class="card-tag">Based on 187 covers</span>
+        </div>
+        <div class="card-body" style="padding:10px 18px">
+          <table class="stock-table">
+            <thead><tr>
+              <th>Menu Item</th><th>Predicted Orders</th><th>% of Covers</th><th>Confidence</th>
+            </tr></thead>
+            <tbody id="menu-predictions"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── INVENTORY VIEW ── -->
+    <div class="view" id="view-inventory">
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Total Items Tracked</div>
+          <div class="kpi-val">24</div>
+          <div class="kpi-delta neu">Across 6 categories</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Critical Stock</div>
+          <div class="kpi-val" style="color:var(--red)">2</div>
+          <div class="kpi-delta neg">Needs immediate reorder</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Expiring Soon</div>
+          <div class="kpi-val" style="color:var(--amber)">3</div>
+          <div class="kpi-delta neg">Within 48 hours</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Stock Health</div>
+          <div class="kpi-val" style="color:var(--accent)">74%</div>
+          <div class="kpi-delta pos">↑ Good overall coverage</div>
+        </div>
+      </div>
+
+      <div class="card grid-full">
+        <div class="card-header">
+          <span class="card-title">Full Inventory</span>
+          <span class="card-tag">Last synced: 2 min ago</span>
+        </div>
+        <div class="card-body" style="padding:10px 18px">
+          <table class="stock-table">
+            <thead><tr>
+              <th>Ingredient</th><th>Category</th><th>In Stock</th><th>Unit</th><th>Stock Level</th><th>Expires</th><th>Status</th>
+            </tr></thead>
+            <tbody>
+              <tr><td>Beef mince</td><td style="color:var(--text-muted)">Protein</td><td style="font-family:'DM Mono',monospace">1.8</td><td style="color:var(--text-dim)">kg</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:18%;background:var(--red)"></div></div></td><td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)">Mar 13</td><td><span class="badge badge-crit">Critical</span></td></tr>
+              <tr><td>Burger buns</td><td style="color:var(--text-muted)">Bakery</td><td style="font-family:'DM Mono',monospace">40</td><td style="color:var(--text-dim)">units</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:34%;background:var(--amber)"></div></div></td><td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)">Mar 15</td><td><span class="badge badge-low">Low</span></td></tr>
+              <tr><td>Cheddar cheese</td><td style="color:var(--text-muted)">Dairy</td><td style="font-family:'DM Mono',monospace">2.1</td><td style="color:var(--text-dim)">kg</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:41%;background:var(--amber)"></div></div></td><td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--red)">Mar 14</td><td><span class="badge badge-low">Low</span></td></tr>
+              <tr><td>Iceberg lettuce</td><td style="color:var(--text-muted)">Produce</td><td style="font-family:'DM Mono',monospace">1.4</td><td style="color:var(--text-dim)">kg</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:72%;background:var(--accent2)"></div></div></td><td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)">Mar 14</td><td><span class="badge badge-ok">OK</span></td></tr>
+              <tr><td>Tomatoes</td><td style="color:var(--text-muted)">Produce</td><td style="font-family:'DM Mono',monospace">3.6</td><td style="color:var(--text-dim)">kg</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:91%;background:var(--accent)"></div></div></td><td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)">Mar 16</td><td><span class="badge badge-ok">OK</span></td></tr>
+              <tr><td>Chicken breast</td><td style="color:var(--text-muted)">Protein</td><td style="font-family:'DM Mono',monospace">5.2</td><td style="color:var(--text-dim)">kg</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:87%;background:var(--accent)"></div></div></td><td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)">Mar 15</td><td><span class="badge badge-ok">OK</span></td></tr>
+              <tr><td>Pasta (penne)</td><td style="color:var(--text-muted)">Dry goods</td><td style="font-family:'DM Mono',monospace">4.8</td><td style="color:var(--text-dim)">kg</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:80%;background:var(--accent)"></div></div></td><td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)">Jun 26</td><td><span class="badge badge-ok">OK</span></td></tr>
+              <tr><td>Olive oil</td><td style="color:var(--text-muted)">Oils</td><td style="font-family:'DM Mono',monospace">2.2</td><td style="color:var(--text-dim)">L</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:55%;background:var(--accent2)"></div></div></td><td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted)">Aug 10</td><td><span class="badge badge-ok">OK</span></td></tr>
+              <tr><td>Cream</td><td style="color:var(--text-muted)">Dairy</td><td style="font-family:'DM Mono',monospace">1.1</td><td style="color:var(--text-dim)">L</td><td><div class="stock-bar-bg"><div class="stock-bar-fill" style="width:37%;background:var(--amber)"></div></div></td><td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--red)">Mar 13</td><td><span class="badge badge-low">Low</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CALCULATOR VIEW ── -->
+    <div class="view" id="view-calculator">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Ingredient Demand Calculator</span>
+            <span class="card-tag">Menu → Quantities</span>
+          </div>
+          <div class="card-body">
+            <div class="calc-section">
+              <div class="calc-label">Predicted Covers</div>
+              <div class="calc-row">
+                <input type="number" class="calc-input" id="calc-covers" value="187" min="1" max="500" oninput="runCalc()">
+                <span style="font-size:12px;color:var(--text-muted)">guests expected today</span>
+              </div>
+            </div>
+
+            <div class="calc-section">
+              <div class="calc-label">Menu Mix (portions per 100 covers)</div>
+              <div style="display:flex;flex-direction:column;gap:6px" id="menu-mix-inputs">
+                <div class="calc-row" style="align-items:center;gap:8px">
+                  <input type="number" class="calc-input" style="width:70px" value="22" oninput="runCalc()" data-item="Beef Burger">
+                  <span style="font-size:12px;color:var(--text-muted);flex:1">🍔 Beef Burger</span>
+                </div>
+                <div class="calc-row" style="align-items:center;gap:8px">
+                  <input type="number" class="calc-input" style="width:70px" value="18" oninput="runCalc()" data-item="Chicken Wrap">
+                  <span style="font-size:12px;color:var(--text-muted);flex:1">🌯 Chicken Wrap</span>
+                </div>
+                <div class="calc-row" style="align-items:center;gap:8px">
+                  <input type="number" class="calc-input" style="width:70px" value="15" oninput="runCalc()" data-item="Pasta">
+                  <span style="font-size:12px;color:var(--text-muted);flex:1">🍝 Pasta</span>
+                </div>
+                <div class="calc-row" style="align-items:center;gap:8px">
+                  <input type="number" class="calc-input" style="width:70px" value="12" oninput="runCalc()" data-item="Salad">
+                  <span style="font-size:12px;color:var(--text-muted);flex:1">🥗 Salad</span>
+                </div>
+                <div class="calc-row" style="align-items:center;gap:8px">
+                  <input type="number" class="calc-input" style="width:70px" value="8" oninput="runCalc()" data-item="Cheese Plate">
+                  <span style="font-size:12px;color:var(--text-muted);flex:1">🧀 Cheese Plate</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Ingredient Requirements</span>
+            <span class="card-tag" id="calc-header-tag">For 187 covers</span>
+          </div>
+          <div class="card-body">
+            <div class="calc-output">
+              <div class="calc-output-title">Quantities needed for service ↓</div>
+              <div id="calc-results"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ORDERS VIEW ── -->
+    <div class="view" id="view-orders">
+      <div class="card grid-full">
+        <div class="card-header">
+          <span class="card-title">Supplier Order Recommendations</span>
+          <span class="card-tag">AI-generated · Manual approval required</span>
+        </div>
+        <div class="card-body" style="padding:10px 18px">
+          <table class="orders-table">
+            <thead><tr>
+              <th>Ingredient</th><th>Qty to Order</th><th>Supplier</th><th>Unit Price</th><th>Total</th><th>Delivery</th><th>Priority</th><th>Action</th>
+            </tr></thead>
+            <tbody id="orders-tbody">
+              <tr data-id="0">
+                <td><strong>Beef mince</strong></td>
+                <td style="font-family:'DM Mono',monospace">8 kg</td>
+                <td style="color:var(--text-muted)">MetroMeat Co.</td>
+                <td style="font-family:'DM Mono',monospace">$4.20/kg</td>
+                <td style="font-family:'DM Mono',monospace;color:var(--accent)">$33.60</td>
+                <td style="font-family:'DM Mono',monospace;font-size:11px">Today 14:00</td>
+                <td><span class="badge badge-crit">Urgent</span></td>
+                <td><button class="approve-btn" onclick="approveOrder(this, 0)">Approve</button></td>
+              </tr>
+              <tr data-id="1">
+                <td><strong>Burger buns</strong></td>
+                <td style="font-family:'DM Mono',monospace">80 units</td>
+                <td style="color:var(--text-muted)">City Bakery Supplies</td>
+                <td style="font-family:'DM Mono',monospace">$0.45/unit</td>
+                <td style="font-family:'DM Mono',monospace;color:var(--accent)">$36.00</td>
+                <td style="font-family:'DM Mono',monospace;font-size:11px">Tomorrow 08:00</td>
+                <td><span class="badge badge-low">High</span></td>
+                <td><button class="approve-btn" onclick="approveOrder(this, 1)">Approve</button></td>
+              </tr>
+              <tr data-id="2">
+                <td><strong>Cheddar cheese</strong></td>
+                <td style="font-family:'DM Mono',monospace">3 kg</td>
+                <td style="color:var(--text-muted)">Alpine Dairy</td>
+                <td style="font-family:'DM Mono',monospace">$8.50/kg</td>
+                <td style="font-family:'DM Mono',monospace;color:var(--accent)">$25.50</td>
+                <td style="font-family:'DM Mono',monospace;font-size:11px">Tomorrow 10:00</td>
+                <td><span class="badge badge-low">Medium</span></td>
+                <td><button class="approve-btn" onclick="approveOrder(this, 2)">Approve</button></td>
+              </tr>
+              <tr data-id="3">
+                <td><strong>Cream</strong></td>
+                <td style="font-family:'DM Mono',monospace">4 L</td>
+                <td style="color:var(--text-muted)">Alpine Dairy</td>
+                <td style="font-family:'DM Mono',monospace">$2.80/L</td>
+                <td style="font-family:'DM Mono',monospace;color:var(--accent)">$11.20</td>
+                <td style="font-family:'DM Mono',monospace;font-size:11px">Tomorrow 10:00</td>
+                <td><span class="badge" style="background:rgba(90,176,232,0.12);color:var(--blue)">Low</span></td>
+                <td><button class="approve-btn" onclick="approveOrder(this, 3)">Approve</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card grid-full" style="margin-top:14px">
+        <div class="card-header">
+          <span class="card-title">Order History</span>
+          <span class="card-tag">Last 7 days</span>
+        </div>
+        <div class="card-body" style="padding:10px 18px">
+          <table class="orders-table">
+            <thead><tr><th>Date</th><th>Ingredient</th><th>Supplier</th><th>Qty</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td style="font-family:'DM Mono',monospace;font-size:11px">Mar 10</td><td>Chicken breast</td><td style="color:var(--text-muted)">FreshFarm Direct</td><td style="font-family:'DM Mono',monospace">8 kg</td><td style="font-family:'DM Mono',monospace">$52.00</td><td><span class="badge badge-ok">Delivered</span></td></tr>
+              <tr><td style="font-family:'DM Mono',monospace;font-size:11px">Mar 9</td><td>Tomatoes</td><td style="color:var(--text-muted)">FreshFarm Direct</td><td style="font-family:'DM Mono',monospace">5 kg</td><td style="font-family:'DM Mono',monospace">$14.50</td><td><span class="badge badge-ok">Delivered</span></td></tr>
+              <tr><td style="font-family:'DM Mono',monospace;font-size:11px">Mar 8</td><td>Pasta (penne)</td><td style="color:var(--text-muted)">Wholesale Foods</td><td style="font-family:'DM Mono',monospace">6 kg</td><td style="font-family:'DM Mono',monospace">$9.60</td><td><span class="badge badge-ok">Delivered</span></td></tr>
+              <tr><td style="font-family:'DM Mono',monospace;font-size:11px">Mar 7</td><td>Beef mince</td><td style="color:var(--text-muted)">MetroMeat Co.</td><td style="font-family:'DM Mono',monospace">10 kg</td><td style="font-family:'DM Mono',monospace">$42.00</td><td><span class="badge badge-ok">Delivered</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WASTE VIEW ── -->
+    <div class="view" id="view-waste">
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Waste This Week</div>
+          <div class="kpi-val">2.1<span style="font-size:16px"> kg</span></div>
+          <div class="kpi-delta pos">↓ −38% vs last week</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Expiring in 48h</div>
+          <div class="kpi-val" style="color:var(--amber)">3</div>
+          <div class="kpi-delta neg">Items need attention</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Waste Cost Saved</div>
+          <div class="kpi-val" style="color:var(--accent)">$184</div>
+          <div class="kpi-delta pos">This month vs avg</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">AI Recommendations</div>
+          <div class="kpi-val">3</div>
+          <div class="kpi-delta neu">Active specials suggested</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Expiring Soon — AI Suggestions</span>
+            <span class="card-tag">Act before spoilage</span>
+          </div>
+          <div class="card-body">
+            <div class="waste-items">
+              <div class="waste-item">
+                <div class="waste-icon">🧀</div>
+                <div class="waste-info">
+                  <div class="waste-name">Cheddar cheese — 2.1 kg</div>
+                  <div class="waste-expires">Expires: Mar 14 · 2 days remaining</div>
+                </div>
+                <div class="waste-rec">Add cheese plate special</div>
+              </div>
+              <div class="waste-item">
+                <div class="waste-icon">🥛</div>
+                <div class="waste-info">
+                  <div class="waste-name">Cream — 1.1 L</div>
+                  <div class="waste-expires">Expires: Mar 13 · Tomorrow</div>
+                </div>
+                <div class="waste-rec">Run creamy pasta tonight</div>
+              </div>
+              <div class="waste-item">
+                <div class="waste-icon">🥩</div>
+                <div class="waste-info">
+                  <div class="waste-name">Beef mince — 1.8 kg (residual)</div>
+                  <div class="waste-expires">Expires: Mar 13 · Tomorrow</div>
+                </div>
+                <div class="waste-rec">Promote burger combo deal</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">AI-Recommended Specials Tonight</span>
+            <span class="card-tag">Clear expiring stock</span>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px">
+                <div style="font-weight:600;margin-bottom:4px;font-size:13px">🍔 Burger + Cheese Combo</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Uses beef mince + cheddar. Run at $16.90 (was $19.50). Expected 28 orders.</div>
+                <div style="display:flex;gap:8px">
+                  <div class="badge badge-ok">Est. saves 1.4 kg cheese</div>
+                  <div class="badge" style="background:var(--accent-dim);color:var(--accent)">+$473 revenue</div>
+                </div>
+              </div>
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px">
+                <div style="font-weight:600;margin-bottom:4px;font-size:13px">🍝 Creamy Pesto Pasta</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Uses cream + pasta. Run at $13.50. Expected 18 orders.</div>
+                <div style="display:flex;gap:8px">
+                  <div class="badge badge-ok">Est. clears all cream</div>
+                  <div class="badge" style="background:var(--accent-dim);color:var(--accent)">+$243 revenue</div>
+                </div>
+              </div>
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:14px">
+                <div style="font-weight:600;margin-bottom:4px;font-size:13px">🧀 Cheese Plate Starter</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">3-cheese board with chutneys. Run at $11.00. Expected 22 orders.</div>
+                <div style="display:flex;gap:8px">
+                  <div class="badge badge-ok">Est. saves 0.7 kg cheese</div>
+                  <div class="badge" style="background:var(--accent-dim);color:var(--accent)">+$242 revenue</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ANALYTICS VIEW ── -->
+    <div class="view" id="view-analytics">
+      <div class="analytics-grid">
+        <div class="metric-big">
+          <div class="metric-big-val" style="color:var(--accent)">−38%</div>
+          <div class="metric-big-label">Food waste reduction this week</div>
+        </div>
+        <div class="metric-big">
+          <div class="metric-big-val">96%</div>
+          <div class="metric-big-label">7-day forecast accuracy</div>
+        </div>
+        <div class="metric-big">
+          <div class="metric-big-val" style="color:var(--accent2)">$184</div>
+          <div class="metric-big-label">Waste cost saved this month</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">30-Day Waste Trend</span>
+            <span class="card-tag">kg wasted / week</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-area" id="waste-chart" style="height:120px"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Forecast vs Actual — Last 14 Days</span>
+            <span class="card-tag">Covers / day</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-area" id="accuracy-chart" style="height:120px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card grid-full">
+        <div class="card-header">
+          <span class="card-title">Supplier Spend Summary</span>
+          <span class="card-tag">Last 30 days</span>
+        </div>
+        <div class="card-body" style="padding:10px 18px">
+          <table class="orders-table">
+            <thead><tr><th>Supplier</th><th>Orders</th><th>Total Spend</th><th>Avg Order</th><th>On-time Rate</th></tr></thead>
+            <tbody>
+              <tr><td>MetroMeat Co.</td><td style="font-family:'DM Mono',monospace">6</td><td style="font-family:'DM Mono',monospace;color:var(--accent)">$252.00</td><td style="font-family:'DM Mono',monospace">$42.00</td><td><span class="badge badge-ok">100%</span></td></tr>
+              <tr><td>FreshFarm Direct</td><td style="font-family:'DM Mono',monospace">8</td><td style="font-family:'DM Mono',monospace;color:var(--accent)">$318.40</td><td style="font-family:'DM Mono',monospace">$39.80</td><td><span class="badge badge-ok">100%</span></td></tr>
+              <tr><td>City Bakery Supplies</td><td style="font-family:'DM Mono',monospace">4</td><td style="font-family:'DM Mono',monospace;color:var(--accent)">$144.00</td><td style="font-family:'DM Mono',monospace">$36.00</td><td><span class="badge badge-low">88%</span></td></tr>
+              <tr><td>Alpine Dairy</td><td style="font-family:'DM Mono',monospace">5</td><td style="font-family:'DM Mono',monospace;color:var(--accent)">$183.50</td><td style="font-family:'DM Mono',monospace">$36.70</td><td><span class="badge badge-ok">100%</span></td></tr>
+              <tr><td>Wholesale Foods</td><td style="font-family:'DM Mono',monospace">3</td><td style="font-family:'DM Mono',monospace;color:var(--accent)">$67.20</td><td style="font-family:'DM Mono',monospace">$22.40</td><td><span class="badge badge-ok">100%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ORDER MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title">Approve Purchase Order</div>
+    <div class="modal-sub">Review and confirm this supplier order recommendation</div>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-btn-approve" id="modal-approve-btn">✓ Approve Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✅</span>
+  <span id="toast-msg">Order approved and sent to supplier.</span>
+</div>
+
+<script>
+// ── STATE ──
+let approvedOrders = new Set();
+let pendingApprovals = 2; // beef + buns start as alerts
+
+// ── NAV ──
+function switchView(id, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+
+  const titles = {
+    dashboard: ['Dashboard', 'Thursday, Mar 12 · Dinner service forecast active'],
+    forecast: ['Demand Forecast', 'AI-powered prediction engine'],
+    inventory: ['Inventory', 'Real-time stock levels across all ingredients'],
+    calculator: ['Ingredient Calculator', 'Convert predicted demand to quantities'],
+    orders: ['Supplier Orders', 'Review and approve recommended purchase orders'],
+    waste: ['Waste Optimizer', 'Reduce spoilage with AI-driven specials'],
+    analytics: ['Analytics', 'Performance metrics and supplier insights'],
+  };
+  document.getElementById('view-title').textContent = titles[id][0];
+  document.getElementById('view-sub').textContent = titles[id][1];
+
+  if (id === 'forecast') initForecast();
+  if (id === 'calculator') runCalc();
+  if (id === 'analytics') initAnalytics();
+}
+
+// ── DASHBOARD CHART ──
+const dashData = [
+  { d:'Mon', actual:112, pred:108 },
+  { d:'Tue', actual:98,  pred:102 },
+  { d:'Wed', actual:134, pred:130 },
+  { d:'Thu', actual:null, pred:187 },
+  { d:'Fri', actual:null, pred:172 },
+  { d:'Sat', actual:null, pred:210 },
+  { d:'Sun', actual:null, pred:156 },
+];
+
+function renderBarChart(containerId, data, maxVal) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  const max = maxVal || Math.max(...data.map(d => Math.max(d.actual||0, d.pred||0)));
+  data.forEach(d => {
+    const col = document.createElement('div');
+    col.className = 'chart-col';
+    const bars = document.createElement('div');
+    bars.className = 'chart-bars';
+    if (d.actual != null) {
+      const b = document.createElement('div');
+      b.className = 'cbar cbar-actual';
+      b.style.height = Math.round((d.actual/max)*100) + '%';
+      b.title = `Actual: ${d.actual}`;
+      bars.appendChild(b);
+    }
+    if (d.pred != null) {
+      const b = document.createElement('div');
+      b.className = 'cbar cbar-pred';
+      b.style.height = Math.round((d.pred/max)*100) + '%';
+      b.title = `Predicted: ${d.pred}`;
+      bars.appendChild(b);
+    }
+    const lbl = document.createElement('div');
+    lbl.className = 'chart-label';
+    lbl.textContent = d.d;
+    col.appendChild(bars);
+    col.appendChild(lbl);
+    el.appendChild(col);
+  });
+}
+
+renderBarChart('dash-chart', dashData);
+
+// ── FORECAST ──
+const hourlyData = [
+  {h:'08',v:8},{h:'09',v:12},{h:'10',v:10},{h:'11',v:14},{h:'12',v:28},
+  {h:'13',v:32},{h:'14',v:18},{h:'15',v:10},{h:'16',v:8},{h:'17',v:12},
+  {h:'18',v:22},{h:'19',v:36},{h:'20',v:40},{h:'21',v:30},{h:'22',v:14},{h:'23',v:6}
+];
+
+const menuPredictions = [
+  { name:'🍔 Beef Burger', count:41, pct:22 },
+  { name:'🌯 Chicken Wrap', count:34, pct:18 },
+  { name:'🍝 Pasta', count:28, pct:15 },
+  { name:'🥗 Garden Salad', count:22, pct:12 },
+  { name:'🧀 Cheese Plate', count:15, pct:8 },
+  { name:'🍟 Fries (side)', count:62, pct:33 },
+];
+
+function initForecast() {
+  renderBarChart('hourly-chart', hourlyData.map(d => ({d:d.h, pred:d.v})), 45);
+
+  document.getElementById('forecast-signals').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${[
+        ['📅 Day Type', 'Saturday', 'pos'],
+        ['🌤 Weather', 'Cloudy', 'neu'],
+        ['🏟 Local Event', 'Stadium event +4km', 'pos'],
+        ['❄️ Season', 'Winter', 'neu'],
+        ['📈 Hist. avg Sat', '164 covers', 'neu'],
+        ['📊 AI Uplift', '+14% (event+weekend)', 'pos'],
+      ].map(([k,v,cls]) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--surface2);border-radius:5px;font-size:12px">
+          <span style="color:var(--text-muted)">${k}</span>
+          <span class="${cls}" style="font-family:'DM Mono',monospace;font-size:11px">${v}</span>
+        </div>
+      `).join('')}
+    </div>`;
+
+  const tbody = document.getElementById('menu-predictions');
+  tbody.innerHTML = menuPredictions.map(m => `
+    <tr>
+      <td>${m.name}</td>
+      <td style="font-family:'DM Mono',monospace">${m.count}</td>
+      <td><div style="display:flex;align-items:center;gap:8px">
+        <div style="width:60px;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden">
+          <div style="width:${m.pct}%;height:100%;background:var(--accent);border-radius:3px"></div>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:11px">${m.pct}%</span>
+      </div></td>
+      <td><span class="badge badge-ok" style="font-size:9px">High</span></td>
+    </tr>
+  `).join('');
+}
+
+function runForecast() {
+  // Simulate AI recalculating
+  const event = document.getElementById('fc-event').value;
+  const day = document.getElementById('fc-daytype').value;
+  let base = 140;
+  if (day === 'Friday') base = 160;
+  if (day === 'Saturday') base = 180;
+  if (day === 'Sunday') base = 145;
+  if (day === 'Holiday') base = 200;
+  if (event !== 'None') base = Math.round(base * 1.15);
+
+  document.getElementById('fc-total-tag').textContent = `Total: ${base} covers`;
+  initForecast();
+  showToast(`Forecast updated: ${base} covers predicted`);
+}
+
+// ── CALCULATOR ──
+const recipes = {
+  'Beef Burger': { 'Beef mince (kg)': 0.15, 'Burger buns': 1, 'Lettuce (kg)': 0.05, 'Tomato (kg)': 0.04, 'Cheddar (kg)': 0.04 },
+  'Chicken Wrap': { 'Chicken breast (kg)': 0.12, 'Tortilla wrap': 1, 'Lettuce (kg)': 0.04, 'Cream sauce (L)': 0.03 },
+  'Pasta': { 'Pasta (kg)': 0.12, 'Cream (L)': 0.08, 'Olive oil (L)': 0.02 },
+  'Salad': { 'Lettuce (kg)': 0.12, 'Tomato (kg)': 0.08, 'Olive oil (L)': 0.02 },
+  'Cheese Plate': { 'Cheddar (kg)': 0.12 },
+};
+
+const stockLevels = {
+  'Beef mince (kg)': 1.8, 'Burger buns': 40, 'Lettuce (kg)': 1.4,
+  'Tomato (kg)': 3.6, 'Cheddar (kg)': 2.1, 'Chicken breast (kg)': 5.2,
+  'Tortilla wrap': 30, 'Cream sauce (L)': 2.0, 'Pasta (kg)': 4.8,
+  'Cream (L)': 1.1, 'Olive oil (L)': 2.2,
+};
+
+function runCalc() {
+  const covers = parseInt(document.getElementById('calc-covers').value) || 0;
+  document.getElementById('calc-header-tag').textContent = `For ${covers} covers`;
+
+  const inputs = document.querySelectorAll('#menu-mix-inputs input');
+  const totals = {};
+
+  inputs.forEach(inp => {
+    const item = inp.dataset.item;
+    const pct = parseInt(inp.value) || 0;
+    const qty = Math.round(covers * pct / 100);
+    if (recipes[item]) {
+      Object.entries(recipes[item]).forEach(([ing, perUnit]) => {
+        totals[ing] = (totals[ing] || 0) + qty * perUnit;
+      });
+    }
+  });
+
+  const el = document.getElementById('calc-results');
+  el.innerHTML = Object.entries(totals).map(([ing, qty]) => {
+    const stock = stockLevels[ing] || 0;
+    const need = Math.round(qty * 100) / 100;
+    const diff = Math.round((stock - need) * 100) / 100;
+    const ok = diff >= 0;
+    return `<div class="calc-result-row">
+      <span class="calc-result-name">${ing}</span>
+      <div style="display:flex;gap:12px;align-items:center">
+        <span class="calc-result-val">${need}</span>
+        <span class="calc-result-stock ${ok ? 'pos' : 'neg'}">${ok ? `+${diff} surplus` : `${diff} SHORT`}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── ORDERS ──
+function approveOrder(btn, id) {
+  btn.disabled = true;
+  btn.textContent = '...';
+  setTimeout(() => {
+    btn.parentElement.innerHTML = '<span class="approved-tag">✓ Approved</span>';
+    approvedOrders.add(id);
+
+    // Update badge
+    if (id <= 1) {
+      pendingApprovals = Math.max(0, pendingApprovals - 1);
+      const badge = document.getElementById('order-badge');
+      if (pendingApprovals === 0) badge.style.display = 'none';
+      else badge.textContent = pendingApprovals;
+
+      const topBtn = document.querySelector('.btn-accent');
+      if (pendingApprovals === 0) { topBtn.textContent = '✓ All Alerts Resolved'; topBtn.style.background = 'var(--accent2)'; }
+      else topBtn.textContent = `⚠ ${pendingApprovals} Reorder Alert${pendingApprovals > 1 ? 's' : ''}`;
+    }
+    showToast('Order approved and sent to supplier');
+  }, 600);
+}
+
+function openOrderModal(ing, qty, sup, price, total, delivery) {
+  document.getElementById('modal-body').innerHTML = `
+    <div class="modal-row"><span class="modal-key">Ingredient</span><span class="modal-val">${ing}</span></div>
+    <div class="modal-row"><span class="modal-key">Quantity</span><span class="modal-val">${qty}</span></div>
+    <div class="modal-row"><span class="modal-key">Supplier</span><span class="modal-val">${sup}</span></div>
+    <div class="modal-row"><span class="modal-key">Unit price</span><span class="modal-val">${price}</span></div>
+    <div class="modal-row"><span class="modal-key">Order total</span><span class="modal-val" style="color:var(--accent)">${total}</span></div>
+    <div class="modal-row"><span class="modal-key">Delivery</span><span class="modal-val">${delivery}</span></div>
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('modal-approve-btn').onclick = () => {
+    closeModal();
+    showToast(`${ing} order placed with ${sup}`);
+  };
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+}
+
+// ── ANALYTICS CHARTS ──
+function initAnalytics() {
+  const wasteData = [
+    {d:'W1',pred:8.2},{d:'W2',pred:6.8},{d:'W3',pred:5.1},{d:'W4',pred:3.4}
+  ];
+  renderBarChart('waste-chart', wasteData.map(d => ({d:d.d, pred:d.pred})), 10);
+
+  const accData = [
+    {d:'M1',actual:142,pred:148},{d:'M2',actual:98,pred:101},{d:'M3',actual:165,pred:162},
+    {d:'M4',actual:112,pred:108},{d:'M5',actual:134,pred:130},{d:'M6',actual:88,pred:92},
+    {d:'M7',actual:156,pred:160},{d:'M8',actual:121,pred:118},{d:'M9',actual:143,pred:145},
+    {d:'M10',actual:167,pred:164},{d:'M11',actual:105,pred:108},{d:'M12',actual:189,pred:185},
+    {d:'M13',actual:134,pred:138},{d:'M14',actual:null,pred:187},
+  ];
+  renderBarChart('accuracy-chart', accData);
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// Init
+runCalc();
+</script>
+</body>
+</html>
